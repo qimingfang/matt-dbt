@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  # the databsae to run dbt against
+  postgres:
+    container_name: postgres
+    image: postgres:15.2-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # for debugging
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: postgres
+    ports:
+      - "5050:80"
+
+  # the main DBT thing
+  dbt:
+    container_name: dbt
+    platform: linux/amd64
+    build: .
+    image: matt_lim_is_awesome
+    volumes:
+      - ./:/usr/src/dbt
+    depends_on:
+      postgres:
+        condition: service_healthy
